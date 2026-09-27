@@ -1,0 +1,61 @@
+name: Ingest exact Limbora playtest build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ingest-playtest.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PLAYTEST_ZIP_URL: 'https://sdmntprwestus.oaiusercontent.com/files/00000000-d134-8230-82ee-3b43aea11b96/raw?se=2026-09-27T06%3A36%3A32Z&sp=r&sv=2026-02-06&sr=b&scid=4f0dd089-01e7-50ae-9ce9-78175f22b9be&skoid=732f244e-db13-47c3-bcc7-7ee02a9397bc&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-27T06%3A13%3A51Z&ske=2026-09-28T06%3A13%3A51Z&sks=b&skv=2026-02-06&sig=FnHQMIw/7fpI7y9WzL1pllqgAVJ3C3xE0AupKIPnqkg%3D'
+      EXPECTED_SOURCE_SHA: 'da51ba89ac4bddc0540432222107b40c984f717a'
+    steps:
+      - name: Download compiled artifact
+        run: |
+          curl -L --fail --retry 3 "$PLAYTEST_ZIP_URL" -o playtest.zip
+          mkdir site
+          unzip -q playtest.zip -d site
+
+      - name: Verify deploy-only contents
+        run: |
+          test -f site/index.html
+          test -f site/BUILD.json
+          test -f site/manifest.webmanifest
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const receipt = JSON.parse(fs.readFileSync('site/BUILD.json', 'utf8'));
+          const expected = process.env.EXPECTED_SOURCE_SHA;
+          if (receipt.sourceSha !== expected) {
+            throw new Error(`Wrong source SHA: ${receipt.sourceSha} !== ${expected}`);
+          }
+          if (receipt.sourceRepo !== 'dontaedct/limbora-game-lab') {
+            throw new Error('Unexpected source repository');
+          }
+          NODE
+          if find site -type f -name '*.map' | grep -q .; then
+            echo "Refusing to publish source maps" >&2
+            exit 1
+          fi
+          for forbidden in src tests docs tools .env package.json package-lock.json tsconfig.json; do
+            if [ -e "site/$forbidden" ]; then
+              echo "Refusing unexpected source/development content: $forbidden" >&2
+              exit 1
+            fi
+          done
+          find site -maxdepth 3 -type f -printf '%P %s bytes\n' | sort
+
+      - name: Store verified public-deploy artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: limbora-playtest-da51ba8
+          path: site/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 6
