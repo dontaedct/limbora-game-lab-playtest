@@ -1,4 +1,4 @@
-name: Deploy Limbora founder playtest to GitHub Pages
+name: Deploy Limbora final 002A founder playtest to GitHub Pages
 
 on:
   push:
@@ -24,18 +24,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Download verified playtest artifact
+      - name: Download verified final playtest artifact
         uses: actions/download-artifact@v4
         with:
-          name: limbora-playtest-da51ba8
+          name: limbora-playtest-9f0baea
           path: site
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
-          run-id: 36300365869
+          run-id: 36305266563
 
       - name: Verify exact founder build
         env:
-          EXPECTED_SOURCE_SHA: da51ba89ac4bddc0540432222107b40c984f717a
+          EXPECTED_SOURCE_SHA: 9f0baea3484446b181924bf4927599c84eb58854
         run: |
           test -f site/index.html
           test -f site/BUILD.json
@@ -44,6 +44,9 @@ jobs:
           const receipt = JSON.parse(fs.readFileSync('site/BUILD.json', 'utf8'));
           if (receipt.sourceSha !== process.env.EXPECTED_SOURCE_SHA) {
             throw new Error(`Wrong source SHA: ${receipt.sourceSha}`);
+          }
+          if (receipt.construct !== '002A-FINAL-CLOUD') {
+            throw new Error(`Wrong construct receipt: ${receipt.construct}`);
           }
           NODE
           if find site -type f -name '*.map' | grep -q .; then
