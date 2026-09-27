@@ -1,4 +1,4 @@
-name: Ingest exact Limbora playtest build
+name: Ingest exact Limbora final 002A playtest build
 
 on:
   push:
@@ -14,8 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      PLAYTEST_ZIP_URL: 'https://sdmntprwestus.oaiusercontent.com/files/00000000-d134-8230-82ee-3b43aea11b96/raw?se=2026-09-27T06%3A36%3A32Z&sp=r&sv=2026-02-06&sr=b&scid=4f0dd089-01e7-50ae-9ce9-78175f22b9be&skoid=732f244e-db13-47c3-bcc7-7ee02a9397bc&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-27T06%3A13%3A51Z&ske=2026-09-28T06%3A13%3A51Z&sks=b&skv=2026-02-06&sig=FnHQMIw/7fpI7y9WzL1pllqgAVJ3C3xE0AupKIPnqkg%3D'
-      EXPECTED_SOURCE_SHA: 'da51ba89ac4bddc0540432222107b40c984f717a'
+      PLAYTEST_ZIP_URL: 'https://sdmntprsouthcentralus.oaiusercontent.com/files/00000000-a510-81f7-846e-ac6a9a089878/raw?se=2026-09-27T08%3A13%3A04Z&sp=r&sv=2026-02-06&sr=b&scid=472bfc60-49bb-5c05-b6e3-3cc1ec7aa793&skoid=732f244e-db13-47c3-bcc7-7ee02a9397bc&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-27T02%3A00%3A36Z&ske=2026-09-28T02%3A00%3A36Z&sks=b&skv=2026-02-06&sig=uQPxLx%2BHWqTzo6st4SBbAaOxXiC0LC9zBNwrqERryEw%3D'
+      EXPECTED_SOURCE_SHA: '9f0baea3484446b181924bf4927599c84eb58854'
     steps:
       - name: Download compiled artifact
         run: |
@@ -54,7 +54,7 @@ jobs:
       - name: Store verified public-deploy artifact
         uses: actions/upload-artifact@v4
         with:
-          name: limbora-playtest-da51ba8
+          name: limbora-playtest-9f0baea
           path: site/
           if-no-files-found: error
           retention-days: 3
