@@ -1,0 +1,64 @@
+name: Deploy Limbora founder playtest to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-pages.yml'
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: limbora-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download verified playtest artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: limbora-playtest-da51ba8
+          path: site
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: 36300365869
+
+      - name: Verify exact founder build
+        env:
+          EXPECTED_SOURCE_SHA: da51ba89ac4bddc0540432222107b40c984f717a
+        run: |
+          test -f site/index.html
+          test -f site/BUILD.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const receipt = JSON.parse(fs.readFileSync('site/BUILD.json', 'utf8'));
+          if (receipt.sourceSha !== process.env.EXPECTED_SOURCE_SHA) {
+            throw new Error(`Wrong source SHA: ${receipt.sourceSha}`);
+          }
+          NODE
+          if find site -type f -name '*.map' | grep -q .; then
+            echo "Source maps must not be deployed" >&2
+            exit 1
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
